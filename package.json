@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "express": "^4.21.2",
+    "serialport": "^13.0.0",
+    "ws": "^8.18.0"
+  },
+  "scripts": {
+    "start": "node main.js"
+  }
+}

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Serial Interface Tool</title>
+  <style>
+    /* General Styles */
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    /* Container Styles */
+    .container {
+      width: 95%;
+      max-width: 1000px;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Text Area */
+    textarea {
+      width: calc(100% - 30px);
+      height: 200px;
+      margin-top: 15px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      /* resize: none; */
+      font-size: 14px;
+      background: #f9f9f9;
+      overflow-y: auto;
+      
+    }
+
+    /* Input and Button Styles */
+    input[type="text"] {
+      width: calc(100% - 150px);
+      padding: 10px;
+      margin-right: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 14px;
+      color: white;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #clearBtn {
+      background-color: #dc3545;
+    }
+
+    #clearBtn:hover {
+      background-color: #a71d2a;
+    }
+    #settingsBtn {
+      margin-top: 20px; /* Adjust this value to control the spacing */
+    }
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-content label {
+      display: block;
+      margin: 15px 0 5px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .modal-content select,
+    .modal-content button {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .close-btn {
+      background: #dc3545;
+      color: white;
+    }
+
+    .close-btn:hover {
+      background: #a71d2a;
+    }
+
+    .button-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+  }
+
+  .button-row button {
+    flex: 1; /* Equal button sizes */
+    margin-right: 10px;
+  }
+
+  .button-row button:last-child {
+    margin-right: 0; /* Remove margin on the last button */
+  }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Serial Interface Tool</h1>
+    <div>
+      <input id="messageInput" type="text" placeholder="Type your message" />
+      <button id="sendBtn">Send</button>
+    </div>
+    <textarea id="outputArea" readonly></textarea>
+    <div class="button-row">
+      <button id="clearBtn">Clear</button>
+      <button id="disconnectBtn">Disconnect</button>
+    </div>
+    <button id="settingsBtn">Settings</button>
+  </div>
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <h3>Configuration Menu</h3>
+      <label for="baudRate">Baud Rate:</label>
+      <select id="baudRate">
+        <option value="9600">9600</option>
+        <option value="19200">19200</option>
+        <option value="38400">38400</option>
+        <option value="57600">57600</option>
+        <option value="115200">115200</option>
+      </select>
+      <label for="portSelect">Serial Port:</label>
+      <select id="portSelect">
+        <!-- Dynamically populated ports -->
+      </select>
+      <button id="connectBtn">Connect</button>
+      <button class="close-btn" id="closeModalBtn">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const socket = new WebSocket("ws://localhost:3000");
+
+    socket.onopen = () => console.log("WebSocket connection established");
+    socket.onerror = (err) => console.error("WebSocket error:", err);
+
+    const populatePorts = async () => {
+      const portSelect = document.getElementById("portSelect");
+      portSelect.innerHTML = ""; // Clear existing options
+
+      try {
+        const response = await fetch("/api/ports"); // Fetch available ports from the backend
+        if (response.ok) {
+          const ports = await response.json();
+          ports.forEach((port) => {
+            const option = document.createElement("option");
+            option.value = port;
+            option.textContent = port;
+            portSelect.appendChild(option);
+          });
+        } else {
+          console.error("Failed to fetch ports:", response.statusText);
+          const option = document.createElement("option");
+          option.value = "";
+          option.textContent = "No ports available";
+          portSelect.appendChild(option);
+        }
+      } catch (error) {
+        console.error("Error fetching ports:", error);
+      }
+    };
+
+    // Open and Close Modal
+    document.getElementById("settingsBtn").addEventListener("click", () => {
+      document.getElementById("settingsModal").style.display = "flex";
+    });
+
+    document.getElementById("closeModalBtn").addEventListener("click", () => {
+      document.getElementById("settingsModal").style.display = "none";
+    });
+
+    window.addEventListener("click", (event) => {
+      const modal = document.getElementById("settingsModal");
+      if (event.target === modal) {
+        modal.style.display = "none";
+      }
+    });
+
+    document.getElementById("sendBtn").addEventListener("click", () => {
+      const message = document.getElementById("messageInput").value;
+      socket.send(
+        JSON.stringify({ 
+          type: "send", 
+          message: message 
+        })
+      );
+    });
+
+    // Clear Output Area
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      document.getElementById("outputArea").value = "";
+    });
+
+    // Handle Disconnect Button
+    document.getElementById("disconnectBtn").addEventListener("click", () => {
+      socket.send(JSON.stringify({ type: "disconnect" }));
+    });
+
+    // Handle Connect Button
+    document.getElementById("connectBtn").addEventListener("click", () => {
+      const baudRate = document.getElementById("baudRate").value;
+      const port = document.getElementById("portSelect").value;
+
+      if (port) {
+        socket.send(
+          JSON.stringify({
+            type: "connect",
+            baudRate: baudRate,
+            port: port,
+          })
+        );
+        alert(`Connected to ${port} at ${baudRate} baud.`);
+        document.getElementById("settingsModal").style.display = "none"; // Close modal
+      } else {
+        alert("Please select a valid port.");
+      }
+    });
+
+    // Populate ports on page load
+    document.addEventListener("DOMContentLoaded", populatePorts);
+
+    // Example usage when receiving data from WebSocket
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "output") {
+        // appendToOutputArea(data.message); // Use the autoscroll function
+        const outputArea = document.getElementById("outputArea");
+        outputArea.value += data.message + "\n";
+
+        // Autoscroll to the bottom
+        outputArea.scrollTop = outputArea.scrollHeight;
+      } else if (data.type === "error") {
+        console.error("Error:", data.message);
+        alert(`Error: ${data.message}`);
+      }
+    };
+
+  </script>
+</body>
+</html>
