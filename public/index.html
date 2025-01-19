@@ -199,21 +199,27 @@
         <option value="EAX510">EAX510</option>
         <option value="EAX520">EAX520</option>
       </select>
+      </select>
+      <label for="chipSelect">Chip:</label>
+      <select id="chipSelect">
+        <option value="PIC16F627">PIC16F627</option>
+        <option value="PIC16F627A">PIC16F627A</option>
+        <option value="PIC16F628">PIC16F628</option>
+        <option value="PIC16F628A" selected>PIC16F628A</option>
+      </select>
       <button id="connectBtn">Connect</button>
-      <button class="close-btn" id="closeModalBtn">Close</button>
       <button id="saveSettingsBtn">Save Settings</button>
+      <button class="close-btn" id="closeModalBtn">Close</button>
     </div>
   </div>
 
   <script>
     const socket = new WebSocket("ws://localhost:3000");
 
-    // socket.onopen = () => console.log("WebSocket connection established");
     socket.onopen = () => {
       console.log("WebSocket connection established");
       document.getElementById("outputArea").value += "Connected to server.\n";
     };
-    // socket.onerror = (err) => console.error("WebSocket error:", err);
     socket.onerror = (err) => {
       console.error("WebSocket error:", err);
       document.getElementById("outputArea").value += `Error: ${err}\n`;
@@ -233,6 +239,14 @@
             option.textContent = port;
             portSelect.appendChild(option);
           });
+
+          // load the saved option
+          const savedPort = localStorage.getItem("serialInterfaceSettings");
+          if (savedPort) {
+            const { port } = JSON.parse(savedPort);
+            portSelect.value = port;
+          }
+          
         } else {
           console.error("Failed to fetch ports:", response.statusText);
           const option = document.createElement("option");
@@ -310,10 +324,11 @@
       const savedSettings = localStorage.getItem("serialInterfaceSettings");
       if (savedSettings) {
         console.log("Saved settings:", savedSettings);
-        const { baudRate, port, device } = JSON.parse(savedSettings);
+        const { baudRate, port, device, chip } = JSON.parse(savedSettings);
         document.getElementById("baudRate").value = baudRate || "9600";
         document.getElementById("portSelect").value = port || "";
         document.getElementById("deviceSelect").value = device || "EAX500";
+        document.getElementById("chipSelect").value = chip || "PIC16F628A";
       }
     });
 
@@ -342,11 +357,12 @@
 
     document.getElementById("openProgramBtn").addEventListener("click", () => {
 
-      const programPath = "up.exe"; // Replace with actual program path
-
+      const programPath = "up.exe";
       const device = document.getElementById("deviceSelect").value + '_591.hex';
+      const chip = document.getElementById("chipSelect").value;
+      const firmware = 'C:\\Users\\dhaha\\Documents\\Work\\EAX500-Software\\Resources\\firmware\\' + device;
 
-      const params = ['/part', 'PIC16F627', '/p', 'C:\\Users\\dhaha\\Documents\\Work\\EAX500-Software\\Resources\\firmware\\' + device];
+      const params = ['/part', chip, '/p', firmware];
 
       socket.send(JSON.stringify({ type: "openProgram", path: programPath, params: params, }));
 
@@ -356,8 +372,9 @@
       const baudRate = document.getElementById("baudRate").value;
       const port = document.getElementById("portSelect").value;
       const device = document.getElementById("deviceSelect").value;
+      const chip = document.getElementById("chipSelect").value;
 
-      const settings = { baudRate, port, device };
+      const settings = { baudRate, port, device, chip };
       localStorage.setItem("serialInterfaceSettings", JSON.stringify(settings));
 
       alert("Settings saved!");
