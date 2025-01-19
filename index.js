@@ -34,13 +34,9 @@ wss.on("connection", (ws) => {
   console.log("WebSocket client connected");
   clientSocket = ws;
 
-  console.log(path.resolve(__dirname, "./file.hex"));
-
-
   // Handle messages from the client
   ws.on("message", async (message) => {
     const data = JSON.parse(message);
-
     console.log("Received message:", data);
 
     if (data.type === "connect") {
@@ -151,7 +147,6 @@ wss.on("connection", (ws) => {
       
       // Construct the command
       const command = `"${programPath}" ${resolvedParams.join(" ")}`;
-      console.log("Opening program:", command);
 
       exec(command, (error, stdout, stderr) => {
         if (error) {
