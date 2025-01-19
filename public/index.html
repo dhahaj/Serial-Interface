@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,37 +37,39 @@
     /* Text Area */
     textarea {
       width: calc(100% - 30px);
-      height: 200px;
-      margin-top: 15px;
+      height: 600px;
+      margin-bottom: 15px;
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 5px;
       /* resize: none; */
-      font-size: 14px;
+      font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+      font-size: large;
+      /* font-weight: bold; */
       background: #f9f9f9;
       overflow-y: auto;
-      
+
     }
 
     /* Input and Button Styles */
     input[type="text"] {
-      width: calc(100% - 150px);
-      padding: 10px;
-      margin-right: 10px;
+      width: calc(100% - 120px);
+      padding: 15px;
+      /* margin-right: 15px; */
       border: 1px solid #ddd;
       border-radius: 5px;
-      font-size: 14px;
+      font-size: 16px;
     }
 
     button {
-      padding: 10px 20px;
-      font-size: 14px;
+      padding: 18px 20px;
+      font-size: 16px;
       color: white;
       background-color: #007bff;
       border: none;
-      border-radius: 5px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      font-weight: bold;
     }
 
     button:hover {
@@ -80,9 +83,12 @@
     #clearBtn:hover {
       background-color: #a71d2a;
     }
+
     #settingsBtn {
-      margin-top: 20px; /* Adjust this value to control the spacing */
+      margin-top: 20px;
+      /* Adjust this value to control the spacing */
     }
+
     /* Modal Styles */
     .modal {
       display: none;
@@ -95,6 +101,8 @@
       justify-content: center;
       align-items: center;
       z-index: 1000;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font-size: 18px;
     }
 
     .modal-content {
@@ -116,7 +124,7 @@
 
     .modal-content select,
     .modal-content button {
-      width: 100%;
+      width: 85%;
       padding: 10px;
       font-size: 14px;
       margin-bottom: 15px;
@@ -134,32 +142,36 @@
     }
 
     .button-row {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
-  }
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+    }
 
-  .button-row button {
-    flex: 1; /* Equal button sizes */
-    margin-right: 10px;
-  }
+    .button-row button {
+      flex: 1;
+      /* Equal button sizes */
+      margin-right: 10px;
+    }
 
-  .button-row button:last-child {
-    margin-right: 0; /* Remove margin on the last button */
-  }
+    .button-row button:last-child {
+      margin-right: 0;
+      /* Remove margin on the last button */
+    }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>Serial Interface Tool</h1>
+    <textarea id="outputArea" readonly></textarea>
     <div>
       <input id="messageInput" type="text" placeholder="Type your message" />
       <button id="sendBtn">Send</button>
     </div>
-    <textarea id="outputArea" readonly></textarea>
     <div class="button-row">
       <button id="clearBtn">Clear</button>
       <button id="disconnectBtn">Disconnect</button>
+      <button id="openProgramBtn">Open Program</button>
     </div>
     <button id="settingsBtn">Settings</button>
   </div>
@@ -178,16 +190,34 @@
       <select id="portSelect">
         <!-- Dynamically populated ports -->
       </select>
+      <label for="deviceSelect">Device:</label>
+      <select id="deviceSelect">
+        <option value="EAX500">EAX500</option>
+        <option value="EAX503">EAX503</option>
+        <option value="EAX504">EAX504</option>
+        <option value="EAX505">EAX505</option>
+        <option value="EAX510">EAX510</option>
+        <option value="EAX520">EAX520</option>
+      </select>
       <button id="connectBtn">Connect</button>
       <button class="close-btn" id="closeModalBtn">Close</button>
+      <button id="saveSettingsBtn">Save Settings</button>
     </div>
   </div>
 
   <script>
     const socket = new WebSocket("ws://localhost:3000");
 
-    socket.onopen = () => console.log("WebSocket connection established");
-    socket.onerror = (err) => console.error("WebSocket error:", err);
+    // socket.onopen = () => console.log("WebSocket connection established");
+    socket.onopen = () => {
+      console.log("WebSocket connection established");
+      document.getElementById("outputArea").value += "Connected to server.\n";
+    };
+    // socket.onerror = (err) => console.error("WebSocket error:", err);
+    socket.onerror = (err) => {
+      console.error("WebSocket error:", err);
+      document.getElementById("outputArea").value += `Error: ${err}\n`;
+    };
 
     const populatePorts = async () => {
       const portSelect = document.getElementById("portSelect");
@@ -213,6 +243,8 @@
       } catch (error) {
         console.error("Error fetching ports:", error);
       }
+
+      console.log("Ports populated");
     };
 
     // Open and Close Modal
@@ -234,9 +266,9 @@
     document.getElementById("sendBtn").addEventListener("click", () => {
       const message = document.getElementById("messageInput").value;
       socket.send(
-        JSON.stringify({ 
-          type: "send", 
-          message: message 
+        JSON.stringify({
+          type: "send",
+          message: message
         })
       );
     });
@@ -271,8 +303,19 @@
       }
     });
 
-    // Populate ports on page load
-    document.addEventListener("DOMContentLoaded", populatePorts);
+    // Populate ports and load saved settings
+    document.addEventListener("DOMContentLoaded", () => {
+      populatePorts();
+
+      const savedSettings = localStorage.getItem("serialInterfaceSettings");
+      if (savedSettings) {
+        console.log("Saved settings:", savedSettings);
+        const { baudRate, port, device } = JSON.parse(savedSettings);
+        document.getElementById("baudRate").value = baudRate || "9600";
+        document.getElementById("portSelect").value = port || "";
+        document.getElementById("deviceSelect").value = device || "EAX500";
+      }
+    });
 
     // Example usage when receiving data from WebSocket
     socket.onmessage = (event) => {
@@ -287,10 +330,40 @@
         outputArea.scrollTop = outputArea.scrollHeight;
       } else if (data.type === "error") {
         console.error("Error:", data.message);
+        document.getElementById("outputArea").value += `Error: ${data.message}\n`;
         alert(`Error: ${data.message}`);
+      } else if (data.type === "success") {
+        alert(data.message);
+      } else if (data.type === "error") {
+        console.error("Error:", data.message);
+        alert(data.message);
       }
     };
 
+    document.getElementById("openProgramBtn").addEventListener("click", () => {
+
+      const programPath = "up.exe"; // Replace with actual program path
+
+      const device = document.getElementById("deviceSelect").value + '_591.hex';
+
+      const params = ['/part', 'PIC16F627', '/p', 'C:\\Users\\dhaha\\Documents\\Work\\EAX500-Software\\Resources\\firmware\\' + device];
+
+      socket.send(JSON.stringify({ type: "openProgram", path: programPath, params: params, }));
+
+    });
+
+    document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+      const baudRate = document.getElementById("baudRate").value;
+      const port = document.getElementById("portSelect").value;
+      const device = document.getElementById("deviceSelect").value;
+
+      const settings = { baudRate, port, device };
+      localStorage.setItem("serialInterfaceSettings", JSON.stringify(settings));
+
+      alert("Settings saved!");
+    });
+
   </script>
 </body>
+
 </html>
