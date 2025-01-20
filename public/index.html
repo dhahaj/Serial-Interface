@@ -55,7 +55,7 @@
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 5px;
-      /* resize: none; */
+      resize: vertical;
       font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
       font-size: large;
       /* font-weight: bold; */
@@ -170,10 +170,102 @@
       margin-right: 0;
       /* Remove margin on the last button */
     }
+
+    .sidenav {
+      height: 100%; /* 100% Full-height */
+      width: 0; /* 0 width - change this with JavaScript */
+      position: fixed; /* Stay in place */
+      z-index: 1; /* Stay on top */
+      top: 0; /* Stay at the top */
+      left: 0;
+      background-color: #111; /* Black*/
+      overflow-x: hidden; /* Disable horizontal scroll */
+      padding-top: 60px; /* Place content 60px from the top */
+      transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
+    }
+
+    /* The navigation menu links */
+    .sidenav a {
+      padding: 8px 8px 8px 32px;
+      text-decoration: none;
+      font-size: 25px;
+      color: #818181;
+      display: block;
+      transition: 0.3s;
+    }
+
+    /* When you mouse over the navigation links, change their color */
+    .sidenav a:hover {
+      color: #f1f1f1;
+    }
+
+    /* Position and style the close button (top right corner) */
+    .sidenav .closebtn {
+      position: absolute;
+      top: 0;
+      right: 25px;
+      font-size: 36px;
+      margin-left: 50px;
+    }
+
+    .sidenav a, .dropdown-btn {
+      padding: 6px 8px 6px 16px;
+      text-decoration: none;
+      font-size: 20px;
+      color: #818181;
+      display: block;
+      border: none;
+      background: none;
+      width:100%;
+      text-align: left;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .sidenav a:hover, .dropdown-btn:hover {
+      color: #f1f1f1;
+    }
+    /* Add an active class to the active dropdown button */
+    .active {
+      background-color: green;
+      color: white;
+    }
+
+    /* Dropdown container (hidden by default). Optional: add a lighter background color and some left padding to change the design of the dropdown content */
+    .dropdown-container {
+      display: none;
+      background-color: #262626;
+      padding-left: 8px;
+    }
+
+    /* Optional: Style the caret down icon */
+    .fa-caret-down {
+      float: right;
+      padding-right: 8px;
+    }
   </style>
 </head>
 
 <body>
+  <div id="mySidenav" class="sidenav">
+    <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+    <a href="#">About</a>
+    <a href="#">Services</a>
+    <a href="#">Clients</a>
+    <a href="#" id="connect">Connect</a>
+    <button class="dropdown-btn">Device
+      <i class="fa fa-caret-down"></i>
+    </button>
+    <div class="dropdown-container">
+      <a href="#">EAX500</a>
+      <a href="#">EAX503</a>
+      <a href="#">EAX504</a>
+      <a href="#">EAX505</a>
+      <a href="#">EAX510</a>
+      <a href="#">EAX520</a>
+    </div>
+  </div>
+  
   <div class="container">
     <h1>Serial Interface Tool</h1>
     <div id="connectionLED"></div> <!-- LED Indicator -->
@@ -188,7 +280,7 @@
       <button id="disconnectBtn">Disconnect</button>
       <button id="testBtn">Test</button>
     </div>
-    <button id="settingsBtn">Settings</button>
+    <button id="settingsBtn" onclick="openNav()">Settings</button>
   </div>
   <div id="settingsModal" class="modal">
     <div class="modal-content">
@@ -214,7 +306,7 @@
         <option value="EAX510">EAX510</option>
         <option value="EAX520">EAX520</option>
       </select>
-      </select>
+      <!-- </select> -->
       <label for="chipSelect">Chip:</label>
       <select id="chipSelect">
         <option value="PIC16F627">PIC16F627</option>
@@ -296,9 +388,9 @@
     };
 
     // Open and Close Modal
-    document.getElementById("settingsBtn").addEventListener("click", () => {
-      document.getElementById("settingsModal").style.display = "flex";
-    });
+    // document.getElementById("settingsBtn").addEventListener("click", () => {
+    //   document.getElementById("settingsModal").style.display = "flex";
+    // });
 
     document.getElementById("closeModalBtn").addEventListener("click", () => {
       document.getElementById("settingsModal").style.display = "none";
@@ -364,6 +456,23 @@
         document.getElementById("deviceSelect").value = device || "EAX500";
         document.getElementById("chipSelect").value = chip || "PIC16F628A";
       }
+
+      var dropdown = document.getElementsByClassName("dropdown-btn");
+      var i;
+
+      for (i = 0; i < dropdown.length; i++) {
+        dropdown[i].addEventListener("click", function() {
+          this.classList.toggle("active");
+          var dropdownContent = this.nextElementSibling;
+          if (dropdownContent.style.display === "block") {
+            dropdownContent.style.display = "none";
+          } else {
+            dropdownContent.style.display = "block";
+          }
+        });
+      }
+
+
     });
 
     const appendToOutputArea = (message) => {
@@ -389,7 +498,6 @@
         alert(data.message);
       } else if (data.type === "callback") {
         if (data.message === "test") {
-          document.getElementById("buttonRow").style.display = "flex";
           document.getElementById("testBtn").disabled = false;
           document.getElementById("openProgramBtn").disabled = false;
         }
@@ -425,10 +533,22 @@
     document.getElementById("testBtn").addEventListener("click", () => {
       socket.send(JSON.stringify({ type: "test" }));
       
-      document.getElementById("buttonRow").style.display = "none";
       document.getElementById("testBtn").disabled = true;
-
       document.getElementById("openProgramBtn").disabled = true;
+    });
+
+    /* Set the width of the side navigation to 250px */
+    function openNav() {
+      document.getElementById("mySidenav").style.width = "250px";
+    }
+
+    /* Set the width of the side navigation to 0 */
+    function closeNav() {
+      document.getElementById("mySidenav").style.width = "0";
+    }
+
+    document.getElementById("connect").addEventListener("click", () => {
+      console.log("Connect button clicked");
     });
 
   </script>
