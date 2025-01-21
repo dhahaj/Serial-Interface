@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Serial Interface Tool</title>
+  <title>EAX-500 Test Interface</title>
   <style>
     /* General Styles */
     body {
@@ -33,7 +33,8 @@
       position: absolute;
       top: 55px;
       right: 45px;
-      background-color: rgb(245, 58, 58); /* Default red for disconnected */
+      background-color: rgb(245, 58, 58);
+      /* Default red for disconnected */
     }
 
     /* Container Styles */
@@ -172,16 +173,16 @@
     }
 
     .sidenav {
-      height: 100%; /* 100% Full-height */
-      width: 0; /* 0 width - change this with JavaScript */
-      position: fixed; /* Stay in place */
-      z-index: 1; /* Stay on top */
-      top: 0; /* Stay at the top */
+      height: 100%;
+      width: 0;
+      position: fixed;
+      z-index: 1;
+      top: 0;
       left: 0;
-      background-color: #111; /* Black*/
-      overflow-x: hidden; /* Disable horizontal scroll */
-      padding-top: 60px; /* Place content 60px from the top */
-      transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
+      background-color: #111;
+      overflow-x: hidden;
+      transition: 0.5s;
+      padding-top: 60px;
     }
 
     /* The navigation menu links */
@@ -208,7 +209,8 @@
       margin-left: 50px;
     }
 
-    .sidenav a, .dropdown-btn {
+    .sidenav a,
+    .dropdown-btn {
       padding: 6px 8px 6px 16px;
       text-decoration: none;
       font-size: 20px;
@@ -216,18 +218,35 @@
       display: block;
       border: none;
       background: none;
-      width:100%;
+      width: 100%;
       text-align: left;
       cursor: pointer;
       outline: none;
     }
 
-    .sidenav a:hover, .dropdown-btn:hover {
+    #main {
+      transition: margin-left .5s;
+      padding: 16px;
+    }
+
+    @media screen and (max-height: 450px) {
+      .sidenav {
+        padding-top: 15px;
+      }
+
+      .sidenav a {
+        font-size: 18px;
+      }
+    }
+
+    .sidenav a:hover,
+    .dropdown-btn:hover {
       color: #f1f1f1;
     }
+
     /* Add an active class to the active dropdown button */
     .active {
-      background-color: green;
+      /* background-color: green; */
       color: white;
     }
 
@@ -238,10 +257,18 @@
       padding-left: 8px;
     }
 
+    .dropdown-container a.active {
+      background-color: #0073ee;
+      /* Blue background */
+      color: white;
+      /* White text */
+    }
+
     /* Optional: Style the caret down icon */
     .fa-caret-down {
       float: right;
       padding-right: 8px;
+      color: #ffffff;
     }
   </style>
 </head>
@@ -256,17 +283,31 @@
     <button class="dropdown-btn">Device
       <i class="fa fa-caret-down"></i>
     </button>
-    <div class="dropdown-container">
+    <div id="device" class="dropdown-container">
       <a href="#">EAX500</a>
       <a href="#">EAX503</a>
       <a href="#">EAX504</a>
       <a href="#">EAX505</a>
       <a href="#">EAX510</a>
+      <a href="#">EAX513</a>
+      <a href="#">EAX514</a>
       <a href="#">EAX520</a>
+      <a href="#">EAX523</a>
+      <a href="#">EAX524</a>
+      <a href="#">EAX525</a>
+    </div>
+    <button class="dropdown-btn">Chip Selection
+      <i class="fa fa-caret-down"></i>
+    </button>
+    <div id="chip" class="dropdown-container">
+      <a href="#">PIC16F627</a>
+      <a href="#">PIC16F627A</a>
+      <a href="#">PIC16F628</a>
+      <a href="#">PIC16F628A</a>
     </div>
   </div>
-  
-  <div class="container">
+
+  <div id="main" class="container">
     <h1>Serial Interface Tool</h1>
     <div id="connectionLED"></div> <!-- LED Indicator -->
     <textarea id="outputArea" readonly></textarea>
@@ -285,14 +326,6 @@
   <div id="settingsModal" class="modal">
     <div class="modal-content">
       <h3>Configuration Menu</h3>
-      <label for="baudRate">Baud Rate:</label>
-      <select id="baudRate">
-        <option value="9600">9600</option>
-        <option value="19200">19200</option>
-        <option value="38400">38400</option>
-        <option value="57600">57600</option>
-        <option value="115200">115200</option>
-      </select>
       <label for="portSelect">Serial Port:</label>
       <select id="portSelect">
         <!-- Dynamically populated ports -->
@@ -326,7 +359,7 @@
     // Update LED color based on WebSocket connection status
     const updateConnectionLED = (status) => {
       const led = document.getElementById("connectionLED");
-      if(status) {
+      if (status) {
         led.style.backgroundColor = "rgb(40, 167, 69)"; // Green 
       } else {
         led.style.backgroundColor = "rgb(245, 58, 58)"; // Red
@@ -387,20 +420,12 @@
       console.log("Ports populated");
     };
 
-    // Open and Close Modal
-    // document.getElementById("settingsBtn").addEventListener("click", () => {
-    //   document.getElementById("settingsModal").style.display = "flex";
-    // });
-
     document.getElementById("closeModalBtn").addEventListener("click", () => {
       document.getElementById("settingsModal").style.display = "none";
     });
 
     window.addEventListener("click", (event) => {
-      const modal = document.getElementById("settingsModal");
-      if (event.target === modal) {
-        modal.style.display = "none";
-      }
+      console.log("Event target:", getActiveDevice());
     });
 
     document.getElementById("sendBtn").addEventListener("click", () => {
@@ -425,18 +450,16 @@
 
     // Handle Connect Button
     document.getElementById("connectBtn").addEventListener("click", () => {
-      const baudRate = document.getElementById("baudRate").value;
       const port = document.getElementById("portSelect").value;
 
       if (port) {
         socket.send(
           JSON.stringify({
             type: "connect",
-            baudRate: baudRate,
             port: port,
           })
         );
-        alert(`Connected to ${port} at ${baudRate} baud.`);
+        alert(`Connected to ${port}.`);
         document.getElementById("settingsModal").style.display = "none"; // Close modal
       } else {
         alert("Please select a valid port.");
@@ -450,10 +473,8 @@
       const savedSettings = localStorage.getItem("serialInterfaceSettings");
       if (savedSettings) {
         console.log("Saved settings:", savedSettings);
-        const { baudRate, port, device, chip } = JSON.parse(savedSettings);
-        document.getElementById("baudRate").value = baudRate || "9600";
+        const { port, chip } = JSON.parse(savedSettings);
         document.getElementById("portSelect").value = port || "";
-        document.getElementById("deviceSelect").value = device || "EAX500";
         document.getElementById("chipSelect").value = chip || "PIC16F628A";
       }
 
@@ -461,7 +482,7 @@
       var i;
 
       for (i = 0; i < dropdown.length; i++) {
-        dropdown[i].addEventListener("click", function() {
+        dropdown[i].addEventListener("click", function () {
           this.classList.toggle("active");
           var dropdownContent = this.nextElementSibling;
           if (dropdownContent.style.display === "block") {
@@ -472,6 +493,36 @@
         });
       }
 
+      addDropdownListeners();
+
+      const sidenav = document.getElementById("mySidenav");
+
+      /* Set the width of the side navigation to 250px */
+      function openNav() {
+        document.getElementById("mySidenav").style.width = "250px";
+        document.getElementById("main").style.marginLeft = "350px";
+      }
+
+      /* Set the width of the side navigation to 0 */
+      function closeNav() {
+        document.getElementById("mySidenav").style.width = "0";
+        document.getElementById("main").style.marginLeft= "0";
+      }
+
+      // Close sidenav if clicked outside of it
+      document.addEventListener("click", (event) => {
+        // Check if the click is outside the sidenav
+        if (!sidenav.contains(event.target) && event.target.id !== "settingsBtn" ) {
+          closeNav();
+        }
+      });
+
+      // Prevent clicks inside the sidenav from closing it
+      sidenav.addEventListener("click", (event) => {
+        event.stopPropagation();
+      });
+
+      window.openNav = openNav;
 
     });
 
@@ -506,9 +557,14 @@
 
     document.getElementById("openProgramBtn").addEventListener("click", () => {
 
+      if (getActiveDevice() === null) {
+        alert("Please select a device.");
+        return;
+      }
+
       const programPath = "up.exe";
-      const device = document.getElementById("deviceSelect").value + '_591.hex';
-      const chip = document.getElementById("chipSelect").value;
+      const device = getActiveDevice() + '_591.hex';
+      const chip = getActiveChip();
       const firmware = 'C:\\Users\\dhaha\\Documents\\Work\\EAX500-Software\\Resources\\firmware\\' + device;
 
       const params = ['/part', chip, '/p', firmware];
@@ -519,12 +575,10 @@
     });
 
     document.getElementById("saveSettingsBtn").addEventListener("click", () => {
-      const baudRate = document.getElementById("baudRate").value;
       const port = document.getElementById("portSelect").value;
-      const device = document.getElementById("deviceSelect").value;
       const chip = document.getElementById("chipSelect").value;
 
-      const settings = { baudRate, port, device, chip };
+      const settings = { port, chip };
       localStorage.setItem("serialInterfaceSettings", JSON.stringify(settings));
 
       alert("Settings saved!");
@@ -532,24 +586,58 @@
 
     document.getElementById("testBtn").addEventListener("click", () => {
       socket.send(JSON.stringify({ type: "test" }));
-      
+
       document.getElementById("testBtn").disabled = true;
       document.getElementById("openProgramBtn").disabled = true;
     });
 
-    /* Set the width of the side navigation to 250px */
-    function openNav() {
-      document.getElementById("mySidenav").style.width = "250px";
-    }
-
-    /* Set the width of the side navigation to 0 */
-    function closeNav() {
-      document.getElementById("mySidenav").style.width = "0";
-    }
-
     document.getElementById("connect").addEventListener("click", () => {
       console.log("Connect button clicked");
     });
+
+    const addDropdownListeners = () => {
+      const dropdownItems = document.querySelectorAll(".dropdown-container a");
+
+      dropdownItems.forEach((item) => {
+        item.addEventListener("click", (event) => {
+          event.preventDefault(); // Prevent default link behavior
+
+          // Remove 'active' class from all items
+          dropdownItems.forEach((item) => item.classList.remove("active"));
+
+          // Add 'active' class to the clicked item
+          event.target.classList.add("active");
+
+          // Log or handle the selected device
+          const selectedDevice = event.target.textContent;
+          console.log(`Selected device: ${selectedDevice}`);
+
+          // Example: Update another field (like a dropdown or text display)
+          const deviceSelect = document.getElementById("deviceSelect");
+          if (deviceSelect) {
+            deviceSelect.value = selectedDevice;
+          }
+
+          // alert(`Device selected: ${selectedDevice}`);
+        });
+      });
+    };
+
+    function getActiveDevice() {
+      const activeItem = document.querySelector(".dropdown-container a.active");
+      if (activeItem) {
+        return activeItem.textContent; // Return the text of the active item
+      }
+      return null; // No active item found
+    }
+
+    function getActiveChip() {
+      const activeChip = document.querySelector("#chip a.active");
+      if (activeChip) {
+        return activeChip.textContent; // Return the text of the active chip
+      }
+      return null; // No active chip selected
+    }
 
   </script>
 </body>
