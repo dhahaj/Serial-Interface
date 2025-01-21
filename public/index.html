@@ -560,6 +560,9 @@
       if (getActiveDevice() === null) {
         alert("Please select a device.");
         return;
+      } else if (getActiveChip() === null) {
+        alert("Please select a chip.");
+        return;
       }
 
       const programPath = "up.exe";
