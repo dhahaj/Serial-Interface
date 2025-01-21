@@ -1,0 +1,286 @@
+/* General Styles */
+body {
+    font-family: 'Roboto Serif', sans-serif;
+    /* background-color: #f4f4f9; */
+    background-color: rgb(0, 56, 87);
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+h1 {
+    margin-bottom: 20px;
+    color: #5b86a3;
+    position: relative;
+}
+
+#hamburgerIcon {
+    width: 40px;
+    height: 40px;
+    /* background-color: #111; */
+    /* color: white; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#hamburgerIcon:hover {
+    background-color: #1c7aa1;
+}
+
+/* Connection LED Styles */
+#connectionLED {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    position: absolute;
+    top: 55px;
+    right: 45px;
+    background-color: rgb(245, 58, 58);
+    /* Default red for disconnected */
+}
+
+/* Container Styles */
+.container {
+    width: 95%;
+    max-width: 1000px;
+    background-color: rgb(0, 42, 65);
+
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+/* Text Area */
+textarea {
+    width: calc(100% - 30px);
+    height: 600px;
+    margin-bottom: 15px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    resize: vertical;
+    /* font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; */
+    font-size: 22px;
+    /* font-weight: bold; */
+    background: #f9f9f9;
+    overflow-y: auto;
+}
+
+/* Input and Button Styles */
+input[type="text"] {
+    width: calc(100% - 120px);
+    padding: 15px;
+    /* margin-right: 15px; */
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button {
+    padding: 18px 20px;
+    font-size: 18px;
+    color: white;
+    background-color: #0073ee;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+#clearBtn {
+    background-color: #dc3545;
+}
+
+#clearBtn:hover {
+    background-color: #a71d2a;
+}
+
+#settingsBtn {
+    margin-top: 20px;
+    background-color: #28a745;
+    width: 30%;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 18px;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content label {
+    display: block;
+    margin: 15px 0 5px;
+    font-size: 14px;
+    color: #333;
+}
+
+.modal-content select,
+.modal-content button {
+    width: 85%;
+    padding: 10px;
+    font-size: 14px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.close-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.close-btn:hover {
+    background: #a71d2a;
+}
+
+.button-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.button-row button {
+    flex: 1;
+    /* Equal button sizes */
+    margin-right: 10px;
+}
+
+.button-row button:last-child {
+    margin-right: 0;
+    /* Remove margin on the last button */
+}
+
+.sidenav {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+}
+
+/* The navigation menu links */
+#saveSettingsBtn,
+.sidenav a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+}
+
+/* When you mouse over the navigation links, change their color */
+#saveSettingsBtn:hover,
+.sidenav a:hover {
+    color: #f1f1f1;
+}
+
+/* Position and style the close button (top right corner) */
+.sidenav .closebtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+}
+
+#saveSettingsBtn,
+.sidenav a,
+.dropdown-btn {
+    padding: 6px 8px 6px 16px;
+    text-decoration: none;
+    font-size: 20px;
+    color: #818181;
+    display: block;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    outline: none;
+}
+
+#main {
+    transition: margin-left .5s;
+    padding: 16px;
+}
+
+@media screen and (max-height: 450px) {
+    .sidenav {
+        padding-top: 15px;
+    }
+
+    .sidenav a {
+        font-size: 18px;
+    }
+}
+
+.sidenav a:hover,
+.dropdown-btn:hover {
+    color: #f1f1f1;
+}
+
+/* Add an active class to the active dropdown button */
+.active {
+    /* background-color: green; */
+    color: white;
+}
+
+/* Dropdown container (hidden by default). Optional: add a lighter background color and some left padding to change the design of the dropdown content */
+.dropdown-container {
+    display: none;
+    background-color: #262626;
+    padding-left: 8px;
+}
+
+.dropdown-container a.active {
+    background-color: #0073ee;
+    /* Blue background */
+    color: white;
+    /* White text */
+}
+
+
+/* Optional: Style the caret down icon */
+.fa-caret-down {
+    float: right;
+    padding-right: 8px;
+    /* color: #ffffff; */
+}
