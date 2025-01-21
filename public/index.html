@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>EAX-500 Test Interface</title>
@@ -560,15 +561,18 @@
         // alert(`Error: ${data.message}`);
         document.getElementById("testBtn").disabled = false;
         document.getElementById("openProgramBtn").disabled = false;
+        document.getElementById("openProgramBtn").innerHTML = "Program";
       } else if (data.type === "success") {
         appendToOutputArea(`Success: ${data.message}`);
         // alert(data.message);
         document.getElementById("testBtn").disabled = false;
         document.getElementById("openProgramBtn").disabled = false;
+        document.getElementById("openProgramBtn").innerHTML = "Program";
       } else if (data.type === "callback") {
         if (data.message === "test") {
           document.getElementById("testBtn").disabled = false;
           document.getElementById("openProgramBtn").disabled = false;
+          document.getElementById("testBtn").innerHTML = "Test";
         }
       }
     };
@@ -594,6 +598,8 @@
 
       document.getElementById("testBtn").disabled = true;
       document.getElementById("openProgramBtn").disabled = true;
+
+      document.getElementById("openProgramBtn").innerHTML = "<i class='fa fa-spinner fa-spin'></i> Programming...";
     });
 
     document.getElementById("saveSettingsBtn").addEventListener("click", () => {
@@ -611,6 +617,8 @@
 
       document.getElementById("testBtn").disabled = true;
       document.getElementById("openProgramBtn").disabled = true;
+
+      document.getElementById("testBtn").innerHTML = "<i class='fa fa-spinner fa-spin'></i> Testing...";
     });
 
     document.getElementById("connect").addEventListener("click", () => {
