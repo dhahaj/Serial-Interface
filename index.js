@@ -46,7 +46,7 @@ wss.on("connection", (ws) => {
 
     if (data.type === "connect") {
       // Connect to the selected serial port
-      const { port, baudRate } = data;
+      const { port } = data;
 
       // If already connected, disconnect the current port first
       if (serialPort && serialPort.isOpen) {
@@ -56,7 +56,6 @@ wss.on("connection", (ws) => {
       try {
         serialPort = new SerialPort({
           path: port,
-          baudRate: parseInt(baudRate, 10),
         });
 
         serialPort.on("data", (data) => {
@@ -76,7 +75,7 @@ wss.on("connection", (ws) => {
         ws.send(
           JSON.stringify({ type: "status", message: `Connected to ${port}` })
         );
-        console.log(`Connected to ${port} at ${baudRate} baud.`);
+        console.log(`Connected to ${port}.`);
       } catch (error) {
         console.error("Error connecting to serial port:", error);
         ws.send(
