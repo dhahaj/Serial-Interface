@@ -258,11 +258,10 @@
     }
 
     .dropdown-container a.active {
-      background-color: #0073ee;
-      /* Blue background */
-      color: white;
-      /* White text */
+      background-color: #0073ee; /* Blue background */
+      color: white; /* White text */
     }
+
 
     /* Optional: Style the caret down icon */
     .fa-caret-down {
@@ -308,7 +307,7 @@
   </div>
 
   <div id="main" class="container">
-    <h1>Serial Interface Tool</h1>
+    <h1>EAX-500 Test Interface</h1>
     <div id="connectionLED"></div> <!-- LED Indicator -->
     <textarea id="outputArea" readonly></textarea>
     <div>
@@ -445,7 +444,8 @@
 
     // Handle Disconnect Button
     document.getElementById("disconnectBtn").addEventListener("click", () => {
-      socket.send(JSON.stringify({ type: "disconnect" }));
+      // socket.send(JSON.stringify({ type: "disconnect" }));
+      saveSettings();
     });
 
     // Handle Connect Button
@@ -468,32 +468,44 @@
 
     // Populate ports and load saved settings
     document.addEventListener("DOMContentLoaded", () => {
+      // Populate ports
       populatePorts();
 
-      const savedSettings = localStorage.getItem("serialInterfaceSettings");
-      if (savedSettings) {
-        console.log("Saved settings:", savedSettings);
-        const { port, chip } = JSON.parse(savedSettings);
-        document.getElementById("portSelect").value = port || "";
-        document.getElementById("chipSelect").value = chip || "PIC16F628A";
-      }
-
-      var dropdown = document.getElementsByClassName("dropdown-btn");
-      var i;
-
-      for (i = 0; i < dropdown.length; i++) {
-        dropdown[i].addEventListener("click", function () {
+      // Dropdown button toggle logic
+      const dropdownButtons = document.querySelectorAll(".dropdown-btn");
+      dropdownButtons.forEach((btn) => {
+        btn.addEventListener("click", function () {
           this.classList.toggle("active");
-          var dropdownContent = this.nextElementSibling;
+          const dropdownContent = this.nextElementSibling;
           if (dropdownContent.style.display === "block") {
             dropdownContent.style.display = "none";
           } else {
             dropdownContent.style.display = "block";
           }
         });
-      }
+      });
 
+      // Add listeners for dropdown items
       addDropdownListeners();
+
+      // Restore saved settings
+      const savedSettings = localStorage.getItem("serialInterfaceSettings");
+      if (savedSettings) {
+        console.log("Restoring saved settings:", savedSettings);
+        const { chip } = JSON.parse(savedSettings);
+
+        // Restore active chip
+        if (chip) {
+          const chipItems = document.querySelectorAll("#chip a");
+          chipItems.forEach((item) => {
+            if (item.textContent === chip) {
+              item.classList.add("active"); // Add 'active' class to saved chip
+            } else {
+              item.classList.remove("active"); // Remove 'active' class from others
+            }
+          });
+        }
+      }
 
       const sidenav = document.getElementById("mySidenav");
 
@@ -506,13 +518,13 @@
       /* Set the width of the side navigation to 0 */
       function closeNav() {
         document.getElementById("mySidenav").style.width = "0";
-        document.getElementById("main").style.marginLeft= "0";
+        document.getElementById("main").style.marginLeft = "0";
       }
 
       // Close sidenav if clicked outside of it
       document.addEventListener("click", (event) => {
         // Check if the click is outside the sidenav
-        if (!sidenav.contains(event.target) && event.target.id !== "settingsBtn" ) {
+        if (!sidenav.contains(event.target) && event.target.id !== "settingsBtn") {
           closeNav();
         }
       });
@@ -523,8 +535,8 @@
       });
 
       window.openNav = openNav;
-
     });
+
 
     const appendToOutputArea = (message) => {
       const outputArea = document.getElementById("outputArea");
@@ -543,10 +555,14 @@
       } else if (data.type === "error") {
         appendToOutputArea(`Error: ${data.message}`);
         console.error("Error:", data.message);
-        alert(`Error: ${data.message}`);
+        // alert(`Error: ${data.message}`);
+        document.getElementById("testBtn").disabled = false;
+        document.getElementById("openProgramBtn").disabled = false;
       } else if (data.type === "success") {
         appendToOutputArea(`Success: ${data.message}`);
-        alert(data.message);
+        // alert(data.message);
+        document.getElementById("testBtn").disabled = false;
+        document.getElementById("openProgramBtn").disabled = false;
       } else if (data.type === "callback") {
         if (data.message === "test") {
           document.getElementById("testBtn").disabled = false;
@@ -556,23 +572,24 @@
     };
 
     document.getElementById("openProgramBtn").addEventListener("click", () => {
+      const activeDevice = getActiveDevice();
+      const activeChip = getActiveChip();
 
-      if (getActiveDevice() === null) {
+      if (!activeDevice) {
         alert("Please select a device.");
         return;
-      } else if (getActiveChip() === null) {
+      }
+      if (!activeChip) {
         alert("Please select a chip.");
         return;
       }
 
       const programPath = "up.exe";
-      const device = getActiveDevice() + '_591.hex';
-      const chip = getActiveChip();
-      const firmware = 'C:\\Users\\dhaha\\Documents\\Work\\EAX500-Software\\Resources\\firmware\\' + device;
+      const firmware = `C:\\Users\\dhaha\\Documents\\Work\\EAX500-Software\\Resources\\firmware\\${activeDevice}_591.hex`;
+      const params = ["/part", activeChip, "/p", firmware];
 
-      const params = ['/part', chip, '/p', firmware];
+      socket.send(JSON.stringify({ type: "openProgram", path: programPath, params }));
 
-      socket.send(JSON.stringify({ type: "openProgram", path: programPath, params: params, }));
       document.getElementById("testBtn").disabled = true;
       document.getElementById("openProgramBtn").disabled = true;
     });
@@ -599,48 +616,78 @@
     });
 
     const addDropdownListeners = () => {
-      const dropdownItems = document.querySelectorAll(".dropdown-container a");
-
-      dropdownItems.forEach((item) => {
+      // Device dropdown logic
+      const deviceItems = document.querySelectorAll("#device a");
+      deviceItems.forEach((item) => {
         item.addEventListener("click", (event) => {
-          event.preventDefault(); // Prevent default link behavior
+          event.preventDefault();
 
-          // Remove 'active' class from all items
-          dropdownItems.forEach((item) => item.classList.remove("active"));
+          // Remove 'active' class from all device items
+          deviceItems.forEach((item) => item.classList.remove("active"));
 
-          // Add 'active' class to the clicked item
+          // Add 'active' class to the clicked device item
           event.target.classList.add("active");
 
           // Log or handle the selected device
           const selectedDevice = event.target.textContent;
           console.log(`Selected device: ${selectedDevice}`);
 
-          // Example: Update another field (like a dropdown or text display)
+          // Example: Update the corresponding field
           const deviceSelect = document.getElementById("deviceSelect");
           if (deviceSelect) {
             deviceSelect.value = selectedDevice;
           }
+        });
+      });
 
-          // alert(`Device selected: ${selectedDevice}`);
+      // Chip dropdown logic
+      const chipItems = document.querySelectorAll("#chip a");
+      chipItems.forEach((item) => {
+        item.addEventListener("click", (event) => {
+          event.preventDefault();
+
+          // Remove 'active' class from all chip items
+          chipItems.forEach((item) => item.classList.remove("active"));
+
+          // Add 'active' class to the clicked chip item
+          event.target.classList.add("active");
+
+          // Log or handle the selected chip
+          const selectedChip = event.target.textContent;
+          console.log(`Selected chip: ${selectedChip}`);
+
+          // Example: Update the corresponding field
+          const chipSelect = document.getElementById("chipSelect");
+          if (chipSelect) {
+            chipSelect.value = selectedChip;
+          }
+
+          // Save settings when a new chip is selected
+          saveSettings();
         });
       });
     };
 
+
     function getActiveDevice() {
-      const activeItem = document.querySelector(".dropdown-container a.active");
-      if (activeItem) {
-        return activeItem.textContent; // Return the text of the active item
-      }
-      return null; // No active item found
+      const activeDevice = document.querySelector("#device a.active");
+      return activeDevice ? activeDevice.textContent : null;
     }
 
     function getActiveChip() {
       const activeChip = document.querySelector("#chip a.active");
-      if (activeChip) {
-        return activeChip.textContent; // Return the text of the active chip
-      }
-      return null; // No active chip selected
+      return activeChip ? activeChip.textContent : null;
     }
+
+    function saveSettings() {
+      const port = document.getElementById("portSelect").value;
+      const activeChip = document.querySelector("#chip a.active");
+
+      const settings = { port, chip: activeChip ? activeChip.textContent : null };
+      console.log("Settings saved:", settings);
+      localStorage.setItem("serialInterfaceSettings", JSON.stringify(settings));
+    }
+
 
   </script>
 </body>
