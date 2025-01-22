@@ -11,6 +11,8 @@
 </head>
 
 <body>
+  <div id="overlay"></div>
+  <div id="selectedDeviceLabel"></div>
 
   <!-- Hamburger Icon -->
   <div id="hamburgerIcon" onclick="openNav()"
@@ -55,6 +57,10 @@
       <a href="#">PIC16F628</a>
       <a href="#">PIC16F628A</a>
     </div>
+    <br>
+    <label for="a" style="margin-left: 20px; color: white;">Speed</label>
+    <input type="range" id="a" name="a" value="50" style="width: 70%; padding: 10px 0; margin: 10px 20px;" />
+    <br>
     <button id="saveSettingsBtn">Save Settings</button>
   </div>
 
@@ -99,7 +105,7 @@
         <option value="PIC16F628A" selected>PIC16F628A</option>
       </select>
       <button id="connectBtn">Connect</button>
-      
+
       <button class="close-btn" id="closeModalBtn">Close</button>
     </div>
   </div>
@@ -177,6 +183,10 @@
 
     window.addEventListener("click", (event) => {
       console.log("Event target:", getActiveDevice());
+    });
+
+    window.addEventListener("close", (event) => {
+      console.log("Close event:", event);
     });
 
     // document.getElementById("sendBtn").addEventListener("click", () => {
@@ -266,12 +276,14 @@
       function openNav() {
         document.getElementById("mySidenav").style.width = "250px";
         document.getElementById("main").style.marginLeft = "350px";
+        document.getElementById("overlay").style.display = "block"; // Show overlay
       }
 
       /* Set the width of the side navigation to 0 */
       function closeNav() {
         document.getElementById("mySidenav").style.width = "0";
         document.getElementById("main").style.marginLeft = "0";
+        document.getElementById("overlay").style.display = "none"; // Hide overlay
       }
 
       // Close sidenav if clicked outside of it
@@ -381,6 +393,8 @@
     const addDropdownListeners = () => {
       // Device dropdown logic
       const deviceItems = document.querySelectorAll("#device a");
+      const selectedDeviceLabel = document.getElementById("selectedDeviceLabel");
+
       deviceItems.forEach((item) => {
         item.addEventListener("click", (event) => {
           event.preventDefault();
@@ -394,6 +408,10 @@
           // Log or handle the selected device
           const selectedDevice = event.target.textContent;
           console.log(`Selected device: ${selectedDevice}`);
+
+          // Update the label text
+          selectedDeviceLabel.textContent = `${selectedDevice}`;
+          selectedDeviceLabel.style.display = "block"; // Show the label
 
           // Example: Update the corresponding field
           const deviceSelect = document.getElementById("deviceSelect");
@@ -430,6 +448,7 @@
         });
       });
     };
+
 
 
     function getActiveDevice() {
