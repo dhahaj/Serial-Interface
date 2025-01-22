@@ -18,6 +18,20 @@ h1 {
     position: relative;
 }
 
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Semi-transparent black */
+    z-index: 1000;
+    /* Place it above the content but below the sidenav */
+    display: none;
+    /* Hidden by default */
+}
+
 #hamburgerIcon {
     width: 40px;
     height: 40px;
@@ -39,9 +53,10 @@ h1 {
     width: 30px;
     height: 30px;
     border-radius: 50%;
+    opacity: 0.85;
     position: absolute;
-    top: 55px;
-    right: 45px;
+    top: 42px;
+    right: 32px;
     background-color: rgb(245, 58, 58);
     /* Default red for disconnected */
 }
@@ -70,7 +85,7 @@ textarea {
     /* font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif; */
     font-size: 22px;
     /* font-weight: bold; */
-    background: #f9f9f9;
+    /* background: #f9f9f9; */
     overflow-y: auto;
 }
 
@@ -86,7 +101,7 @@ input[type="text"] {
 
 button {
     padding: 18px 20px;
-    font-size: 18px;
+    font-size: 22px;
     color: white;
     background-color: #0073ee;
     border: none;
@@ -95,12 +110,17 @@ button {
     font-weight: bold;
 }
 
-button:hover {
+/* button:hover {
     background-color: #0056b3;
+} */
+
+#disconnectBtn {
+    display: none;
 }
 
 #clearBtn {
     background-color: #dc3545;
+    display: none;
 }
 
 #clearBtn:hover {
@@ -111,6 +131,7 @@ button:hover {
     margin-top: 20px;
     background-color: #28a745;
     width: 30%;
+    display: none;
 }
 
 /* Modal Styles */
@@ -186,7 +207,7 @@ button:hover {
     height: 100%;
     width: 0;
     position: fixed;
-    z-index: 1;
+    z-index: 1100;
     top: 0;
     left: 0;
     background-color: #111;
@@ -277,10 +298,23 @@ button:hover {
     /* White text */
 }
 
-
 /* Optional: Style the caret down icon */
 .fa-caret-down {
     float: right;
     padding-right: 8px;
     /* color: #ffffff; */
+}
+
+#selectedDeviceLabel {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    color: rgb(231, 231, 231);
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 38px;
+    font-weight: bold;
+    display: none; /* Hidden by default */
+    z-index: 1100;
 }
