@@ -5,9 +5,12 @@ const { exec } = require("child_process");
 const path = require("path");
 const { Board, Led, Pin } = require("johnny-five");
 
+let batteryPin, lowBatteryPin, indicatorPin;
+
 const board = new Board({
   port: "COM15",
 });
+
 
 const app = express();
 const port = 3000;
@@ -36,7 +39,6 @@ app.get("http://localhost:3000/api/ports", async (req, res) => {
 
 // WebSocket server logic
 wss.on("connection", (ws) => {
-
   if (clientSocket) {
     console.log("Client already connected. Closing new connection.");
     ws.send(
@@ -205,18 +207,24 @@ wss.on("connection", (ws) => {
 
 board.on("ready", () => {
   console.log("Board connected");
-  const led = new Led(13);
-  // led.blink(500, () => {
-  //   if (clientSocket) {
-  //     led.off();
-  //   }
-  // });
+
+   batteryPin = new Pin({ pin: 4, type: "digital", mode: board.MODES.OUTPUT, board });
+   lowBatteryPin = new Pin({ pin: 2, type: "digital", mode: board.MODES.OUTPUT, board });
+   indicatorPin = new Pin({ pin: 13, type: "digital", mode: board.MODES.OUTPUT, board });
+
+  // indicatorPin.low(); // Turn on the indicator
+
+  var i = 0;
 
   setInterval(() => {
     if (clientSocket && !testRunning) {
-      led.toggle();
-    } else if (led.isOn && !clientSocket) {
-      led.off();
+      if (indicatorPin.isOn) {
+        indicatorPin.low();
+      } else {
+        indicatorPin.high();
+      }
+    } else if (indicatorPin.isOn && !clientSocket) {
+      indicatorPin.low();
     }
   }, 250);
 
@@ -234,36 +242,44 @@ function delay(ms) {
 var testRunning = false;
 
 async function test(ws) {
-
   testRunning = true;
-  
+
   ws.send(JSON.stringify({ type: "output", message: "\nStarting test..." }));
 
-  board.digitalWrite(13, 1); // Turn on the LED
+  indicatorPin.mode = board.MODES.OUTPUT;
+  lowBatteryPin.mode = board.MODES.OUTPUT;
+  batteryPin.mode = board.MODES.OUTPUT;
 
-  // Delay for 5 seconds
+  indicatorPin.high(); // Turn on the indicator LED
+
   await delay(2000);
 
-  board.pinMode(2, board.MODES.OUTPUT); // Low Battery
-  board.pinMode(4, board.MODES.OUTPUT); // Battery power
-  board.pinMode(13, board.MODES.OUTPUT); // LED
+  // board.pinMode(2, board.MODES.OUTPUT); // Low Battery
+  // board.pinMode(4, board.MODES.OUTPUT); // Battery power
+  // board.pinMode(13, board.MODES.OUTPUT); // LED
+  
+  batteryPin.mode = board.MODES.OUTPUT;
+  lowBatteryPin.mode = board.MODES.OUTPUT;
+  indicatorPin.mode = board.MODES.OUTPUT;
 
+  
   ws.send(JSON.stringify({ type: "output", message: "Low Battery active" }));
-  board.digitalWrite(2, 1); // Low Battery active
-
+  lowBatteryPin.high(); // Turn on the low battery indicator
+  
   await delay(4000);
-
+  
   ws.send(JSON.stringify({ type: "output", message: "Battery power on" }));
-  board.digitalWrite(4, 1); // Battery power on
+  batteryPin.high(); // Turn on the battery power
 
   await delay(3000);
 
   board.digitalWrite(2, 0); // Low Battery inactive
+  lowBatteryPin.low();
   ws.send(JSON.stringify({ type: "output", message: "Low Battery inactive" }));
 
-  await delay(3000);
+  await delay(2000);
 
-  board.digitalWrite(4, 0); // Battery power off
+  batteryPin.low();
   ws.send(JSON.stringify({ type: "output", message: "Battery power off" }));
 
   await delay(2000);
