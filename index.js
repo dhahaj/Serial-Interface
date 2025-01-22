@@ -6,7 +6,7 @@ const path = require("path");
 const { Board, Led, Pin } = require("johnny-five");
 
 const board = new Board({
-  port: "COM15"
+  port: "COM15",
 });
 
 const app = express();
@@ -36,6 +36,19 @@ app.get("http://localhost:3000/api/ports", async (req, res) => {
 
 // WebSocket server logic
 wss.on("connection", (ws) => {
+
+  if (clientSocket) {
+    console.log("Client already connected. Closing new connection.");
+    ws.send(
+      JSON.stringify({
+        type: "error",
+        message: "Another client is already connected.",
+      })
+    );
+    ws.close();
+    return;
+  }
+
   console.log("WebSocket client connected");
   clientSocket = ws;
 
@@ -141,56 +154,41 @@ wss.on("connection", (ws) => {
         );
       }
     } else if (data.type === "openProgram") {
-
-      ws.send(JSON.stringify({ type: "output", message: "Programming board..." }));
+      ws.send(
+        JSON.stringify({ type: "output", message: "Programming board..." })
+      );
 
       const { path: programPath, params } = data; // Program path and parameters
-      
+
       // Resolve relative paths in parameters
       const resolvedParams = params.map((param) =>
         param.startsWith("./") ? param.substring(2) : param
       );
-      
+
       // Construct the command
       const command = `"${programPath}" ${resolvedParams.join(" ")}`;
 
       exec(command, (error, stdout, stderr) => {
         if (error) {
           console.error(`Error: ${error.message}`);
-          ws.send(JSON.stringify({ type: "error",message: `Failed to open program: ${error.message}`,}));
+          ws.send(
+            JSON.stringify({
+              type: "error",
+              message: `Failed to open program: ${error.message}`,
+            })
+          );
           return;
         }
-        ws.send(JSON.stringify({type: "success", message: `Program opened successfully: ${stdout || stderr}`, }));
+        ws.send(
+          JSON.stringify({
+            type: "success",
+            message: `Program opened successfully: ${stdout || stderr}`,
+          })
+        );
         ws.send(JSON.stringify({ type: "callback", message: "test" }));
       });
     } else if (data.type === "test") {
-
-      ws.send(JSON.stringify({ type: "output", message: "Starting test..." }));
-
-      board.pinMode(2, board.MODES.OUTPUT);
-      board.pinMode(4, board.MODES.OUTPUT);
-      board.pinMode(13, board.MODES.OUTPUT);
-      
-      board.digitalWrite(13, 1);
-
-      ws.send(JSON.stringify({ type: "output", message: "Battery power on" }));
-      ws.send(JSON.stringify({ type: "output", message: "Low Battery active" }));
-
-      board.digitalWrite(2, 1);
-      board.digitalWrite(4, 1);
-
-      setTimeout(() => {
-        board.digitalWrite(2, 0);
-        ws.send(JSON.stringify({ type: "output", message: "Low Battery inactive" }));
-
-        setTimeout(() => {
-          board.digitalWrite(4, 0);
-          ws.send(JSON.stringify({ type: "output", message: "Battery power off" }));
-          ws.send(JSON.stringify({ type: "output", message: "Testing complete" }));
-          ws.send(JSON.stringify({ type: "callback", message: "test" }));
-        }, 5000);
-      }, 5000);
-
+      test(ws);
     }
   });
 
@@ -201,13 +199,27 @@ wss.on("connection", (ws) => {
       serialPort.close(() => console.log("Serial port connection closed."));
       serialPort = null;
     }
+    clientSocket = null;
   });
 });
 
 board.on("ready", () => {
   console.log("Board connected");
   const led = new Led(13);
-  led.blink(500);
+  // led.blink(500, () => {
+  //   if (clientSocket) {
+  //     led.off();
+  //   }
+  // });
+
+  setInterval(() => {
+    if (clientSocket && !testRunning) {
+      led.toggle();
+    } else if (led.isOn && !clientSocket) {
+      led.off();
+    }
+  }, 250);
+
   console.log("LED blinking on pin 13");
 });
 
@@ -215,3 +227,52 @@ board.on("exit", () => {
   console.log("Board disconnected");
 });
 
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+var testRunning = false;
+
+async function test(ws) {
+
+  testRunning = true;
+  
+  ws.send(JSON.stringify({ type: "output", message: "\nStarting test..." }));
+
+  board.digitalWrite(13, 1); // Turn on the LED
+
+  // Delay for 5 seconds
+  await delay(2000);
+
+  board.pinMode(2, board.MODES.OUTPUT); // Low Battery
+  board.pinMode(4, board.MODES.OUTPUT); // Battery power
+  board.pinMode(13, board.MODES.OUTPUT); // LED
+
+  ws.send(JSON.stringify({ type: "output", message: "Low Battery active" }));
+  board.digitalWrite(2, 1); // Low Battery active
+
+  await delay(4000);
+
+  ws.send(JSON.stringify({ type: "output", message: "Battery power on" }));
+  board.digitalWrite(4, 1); // Battery power on
+
+  await delay(3000);
+
+  board.digitalWrite(2, 0); // Low Battery inactive
+  ws.send(JSON.stringify({ type: "output", message: "Low Battery inactive" }));
+
+  await delay(3000);
+
+  board.digitalWrite(4, 0); // Battery power off
+  ws.send(JSON.stringify({ type: "output", message: "Battery power off" }));
+
+  await delay(2000);
+
+  ws.send(JSON.stringify({ type: "output", message: "Testing complete\n" }));
+
+  await delay(1000);
+
+  ws.send(JSON.stringify({ type: "callback", message: "test" }));
+
+  testRunning = false;
+}
