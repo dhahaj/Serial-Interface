@@ -1,11 +1,12 @@
 {
-  "main" : "main.js",
+  "main": "main.js",
   "dependencies": {
     "express": "^4.21.2",
     "firmata": "^2.3.0",
     "firmata-io": "^2.3.0",
     "johnny-five": "^2.1.0",
     "serialport": "^13.0.0",
+    "winston": "^3.17.0",
     "ws": "^8.18.0"
   },
   "scripts": {
