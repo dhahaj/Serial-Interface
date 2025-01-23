@@ -1,0 +1,6 @@
+{
+  "port": "COM15",
+  "device": "EAX500",
+  "chip": "PIC16F628A",
+  "speed": 75
+}
