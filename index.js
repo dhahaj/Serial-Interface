@@ -3,6 +3,8 @@ const WebSocket = require("ws");
 const { SerialPort } = require("serialport");
 const { exec } = require("child_process");
 const path = require("path");
+const fs = require("fs");
+const { createLogger, format, transports } = require("winston");
 const { Board, Led, Pin, PinMode } = require("johnny-five");
 
 let board;
@@ -38,13 +40,24 @@ app.get("/api/ports", async (req, res) => {
 wss.on("connection", (ws) => {
   if (clientSocket) {
     console.log("Client already connected. Closing new connection.");
+    logger.info("Client already connected. Closing new connection.");
     ws.send(JSON.stringify({type: "error",message: "Another client is already connected.",}));
     ws.close();
     return;
   }
 
   console.log("WebSocket client connected");
+  logger.info("WebSocket client connected");
   clientSocket = ws;
+
+  // Send configuration file data when a client connects
+  const configPath = path.join(__dirname, "config.json");
+  const config = readConfigFile(configPath);
+  if (config) {
+    ws.send(JSON.stringify({ type: "config", data: config }));
+  } else {
+    ws.send(JSON.stringify({ type: "error", message: "Failed to load config file" }));
+  }
 
   sendPorts(ws);
 
@@ -52,6 +65,7 @@ wss.on("connection", (ws) => {
   ws.on("message", async (message) => {
     const data = JSON.parse(message);
     console.log("Received message:", data);
+    logger.info(`Received message: ${JSON.stringify(data)}`);
 
     if (data.type === "connect") {
       // Connect to the selected serial port
@@ -178,12 +192,22 @@ wss.on("connection", (ws) => {
         console.error("Error fetching ports:", error);
         sendMsg(ws, "error", "Error fetching ports");
       }
+    } else if (data.type === "saveConfig") {
+      const configPath = path.join(__dirname, "config.json");
+      try {
+        fs.writeFileSync(configPath, JSON.stringify(data.data, null, 2), "utf-8");
+        ws.send(JSON.stringify({ type: "success", message: "Configuration saved successfully." }));
+      } catch (error) {
+        console.error("Error saving configuration:", error.message);
+        ws.send(JSON.stringify({ type: "error", message: "Failed to save configuration." }));
+      }
     }
   });
 
   // Handle client disconnection
   ws.on("close", () => {
     console.log("WebSocket client disconnected");
+    logger.info("WebSocket client disconnected");
     clientSocket = null;
   });
 });
@@ -256,8 +280,37 @@ async function sendPorts(ws) {
 
 function sendMsg(ws, type, message) {
   ws.send(JSON.stringify({ type, message }));
+  logger.info(`Sent message: ${type} - ${message}`);
 }
 
 function sendData(ws, data) {
   ws.send(JSON.stringify(data));
+  logger.info(`Sent data: ${JSON.stringify(data)}`);
 }
+
+// Function to read the configuration file
+function readConfigFile(filePath) {
+  try {
+    const configData = fs.readFileSync(filePath, "utf-8");
+    return JSON.parse(configData); // Assuming JSON format
+  } catch (error) {
+    console.error("Error reading configuration file:", error.message);
+    return null;
+  }
+}
+
+// const logger = require("./logger");
+
+const logger = createLogger({
+  level: "info", // Minimum level to log ("error", "warn", "info", "verbose", "debug", "silly")
+  format: format.combine(
+    format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+    format.printf(({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`)
+  ),
+  transports: [
+    new transports.Console(), // Log to console
+    new transports.File({ filename: "logs/app.log" }) // Log to a file
+  ],
+});
+
+module.exports = logger;
