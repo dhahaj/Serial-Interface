@@ -62,7 +62,6 @@
       <!-- <i class="arrow down"></i> -->
     </button>
     <div id="ports" class="dropdown-container">
-      <!-- <a href="#">PIC16F628A</a> -->
     </div>
     <br>
     <label for="slider" style="margin-left: 20px; color: white;">Speed</label>
@@ -76,10 +75,6 @@
     <h1>EAX-500 Test Interface</h1>
     <div id="connectionLED"></div> <!-- LED Indicator -->
     <textarea id="outputArea" readonly></textarea>
-    <!-- <div>
-      <input id="messageInput" type="text" placeholder="Type your message" />
-      <button id="sendBtn">Send</button>
-    </div> -->
     <div class="button-row" id="buttonRow">
       <button id="openProgramBtn">Program</button>
       <button id="clearBtn">Clear</button>
@@ -104,7 +99,6 @@
         <option value="EAX510">EAX510</option>
         <option value="EAX520">EAX520</option>
       </select>
-      <!-- </select> -->
       <label for="chipSelect">Chip:</label>
       <select id="chipSelect">
         <option value="PIC16F627">PIC16F627</option>
@@ -209,16 +203,6 @@
     window.addEventListener("close", (event) => {
       console.log("Close event:", event);
     });
-
-    // document.getElementById("sendBtn").addEventListener("click", () => {
-    //   const message = document.getElementById("messageInput").value;
-    //   socket.send(
-    //     JSON.stringify({
-    //       type: "send",
-    //       message: message
-    //     })
-    //   );
-    // });
 
     // Clear Output Area
     document.getElementById("clearBtn").addEventListener("click", () => {
@@ -349,13 +333,11 @@
       } else if (data.type === "error") {
         appendToOutputArea(`Error: ${data.message}`);
         console.error("Error:", data.message);
-        // alert(`Error: ${data.message}`);
         document.getElementById("testBtn").disabled = false;
         document.getElementById("openProgramBtn").disabled = false;
         document.getElementById("openProgramBtn").innerHTML = "Program";
       } else if (data.type === "success") {
         appendToOutputArea(`Success: ${data.message}`);
-        // alert(data.message);
         document.getElementById("testBtn").disabled = false;
         document.getElementById("openProgramBtn").disabled = false;
         document.getElementById("openProgramBtn").innerHTML = "Program";
@@ -419,9 +401,6 @@
       localStorage.setItem("serialInterfaceSettings", JSON.stringify(settings));
 
       socket.send(JSON.stringify({ type: "ports" }));
-
-      // alert("Settings saved!");
-      // socket.send(JSON.stringify({ type: "connect", port: "COM15" }));
 
     });
 
