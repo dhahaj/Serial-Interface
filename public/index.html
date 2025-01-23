@@ -379,7 +379,10 @@
           console.error("Data is not an array:", data.data);
         }
         populatePorts(data.data);
-      }
+      } else if (data.type === "config") {
+        console.log("Configuration received:", data.data);
+        applyConfig(data.data); // Apply the configuration to the UI
+      } 
     };
 
     document.getElementById("openProgramBtn").addEventListener("click", () => {
@@ -532,6 +535,34 @@
       localStorage.setItem("serialInterfaceSettings", JSON.stringify(settings));
     }
 
+    function applyConfig(config) {
+      if (config.port) {
+        setActivePort(config.port);
+      }
+      if (config.device) {
+        const deviceItems = document.querySelectorAll("#device a");
+        deviceItems.forEach((item) => {
+          if (item.textContent === config.device) {
+            item.classList.add("active");
+          } else {
+            item.classList.remove("active");
+          }
+        });
+      }
+      if (config.chip) {
+        const chipItems = document.querySelectorAll("#chip a");
+        chipItems.forEach((item) => {
+          if (item.textContent === config.chip) {
+            item.classList.add("active");
+          } else {
+            item.classList.remove("active");
+          }
+        });
+      }
+      if (config.speed) {
+        document.getElementById("slider").value = config.speed;
+      }
+    }
 
   </script>
 </body>
