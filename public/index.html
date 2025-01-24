@@ -85,29 +85,22 @@
   </div>
   <div id="settingsModal" class="modal">
     <div class="modal-content">
-      <h3>Configuration Menu</h3>
-      <label for="portSelect">Serial Port:</label>
-      <select id="portSelect">
-        <!-- Dynamically populated ports -->
-      </select>
-      <label for="deviceSelect">Device:</label>
-      <select id="deviceSelect">
-        <option value="EAX500">EAX500</option>
-        <option value="EAX503">EAX503</option>
-        <option value="EAX504">EAX504</option>
-        <option value="EAX505">EAX505</option>
-        <option value="EAX510">EAX510</option>
-        <option value="EAX520">EAX520</option>
-      </select>
-      <label for="chipSelect">Chip:</label>
-      <select id="chipSelect">
-        <option value="PIC16F627">PIC16F627</option>
-        <option value="PIC16F627A">PIC16F627A</option>
-        <option value="PIC16F628">PIC16F628</option>
-        <option value="PIC16F628A" selected>PIC16F628A</option>
-      </select>
-      <button id="connectBtn">Connect</button>
-
+      <h3>Output Pin Test</h3>
+      <!-- Create buttons to test pins 2 through 13 -->
+      <div class="button-row">
+        <button class="pin-btn" id="pin2" onclick="socket.send(JSON.stringify({ type: 'pin', pin: 13, value: 1 }))">2</button>
+        <button>3</button>
+        <button>4</button>
+        <button>5</button>
+        <button>6</button>
+        <button>7</button>
+        <button>8</button>
+        <button>9</button>
+        <button>10</button>
+        <button>11</button>
+        <button>12</button>
+        <button>13</button>
+      </div>
       <button class="close-btn" id="closeModalBtn">Close</button>
     </div>
   </div>
@@ -189,7 +182,10 @@
   console.log("Ports populated:", ports);
 };
 
-
+    // show settings modal
+    document.getElementById("testBtn").addEventListener("click", () => {
+      document.getElementById("settingsModal").style.display = "block";
+    });
 
 
     document.getElementById("closeModalBtn").addEventListener("click", () => {

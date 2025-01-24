@@ -178,6 +178,11 @@ button {
     border-radius: 5px;
 }
 
+.pin-btn {
+    background: #0073ee;
+    color: white;
+}
+
 .close-btn {
     background: #dc3545;
     color: white;

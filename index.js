@@ -6,9 +6,10 @@ const path = require("path");
 const fs = require("fs");
 const { createLogger, format, transports } = require("winston");
 const { Board, Led, Pin, PinMode } = require("johnny-five");
+const { Relay } = require("johnny-five");
 
 let board;
-let batteryPin, lowBatteryPin, indicatorPin, inputPin;
+let batteryPin, lowBatteryPin, indicatorPin, inputPin, relayPin;
 
 const app = express();
 const port = 3000;
@@ -68,6 +69,7 @@ wss.on("connection", (ws) => {
     logger.info(`Received message: ${JSON.stringify(data)}`);
 
     if (data.type === "connect") {
+
       // Connect to the selected serial port
       const { port } = data;
 
@@ -102,6 +104,7 @@ wss.on("connection", (ws) => {
             type: "digital",
             mode: board.MODES.INPUT,
           });
+          relayPin = new Relay(11);
 
           // ws.send(JSON.stringify({ type: "status", message: "Board ready" }));
 
@@ -201,6 +204,15 @@ wss.on("connection", (ws) => {
         console.error("Error saving configuration:", error.message);
         ws.send(JSON.stringify({ type: "error", message: "Failed to save configuration." }));
       }
+    } else if (data.type === "pin") {
+      const { pin, value } = data;
+      const pinObj = new Pin({
+        pin,
+        type: "digital",
+        mode: board.MODES.OUTPUT,
+      });
+      pinObj[value ? "high" : "low"]();
+      sendMsg(ws, "output", `Pin ${pin} set to ${value ? "HIGH" : "LOW"}`);
     }
   });
 
@@ -220,6 +232,21 @@ var testRunning = false;
 
 async function test(ws, speed) {
   testRunning = true;
+  relayPin.toggle();
+
+  for (let i = 0; i < 16; i++) {
+    let pin = new Pin({
+      pin: i,
+      type: "digital",
+      mode: board.MODES.OUTPUT,
+    });
+    console.log(`Testing pin ${i}`);
+    sendMsg(ws, "output", `Testing pin ${i}`);
+    pin.high();
+    await delay(2000);
+    // pin.low();
+  }
+
 
   ws.send(JSON.stringify({ type: "output", message: "\nStarting test..." }));
 
